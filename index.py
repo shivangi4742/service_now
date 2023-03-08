@@ -1,34 +1,54 @@
-from collections import defaultdict
+def parse_input_file(file_path):
+    sentences = []
+    with open(file_path, "r") as f:
+        for line in f:
+            date , timestamp, sentence = line.strip().split(" ", 2)
+            name, actions = sentence.split(" is ")
+            action, actioner = actions.split(" into the ")
+            sentences.append({"timestamp": date + timestamp, "name": name, "action": action, "actioner": actioner})
+    return sentences
 
-# Read the input file and group the sentences by their prefix
-_sentencesByPrfix = defaultdict(list)
-with open("input.txt", "r") as input_file:
-    for _line in input_file:
-        _prefix, _sentence = _line.strip().split(" ", 1)
-        _sentencesByPrfix[_prefix].append(_sentence)
+def group_sentences_by_name(sentences):
+    name = {}
+    for sentence in sentences:
+        if sentence["name"] in name:
+            name[sentence["name"]].append({"action": sentence["action"], "timestamp": sentence["timestamp"]})
+        else:
+            name[sentence["name"]] = [{"action": sentence["action"], "timestamp": sentence["timestamp"]}]
+    return name
 
-# Find groups of similar sentences and extract the changing word
-
-groups = []
-for _prefix, _sentences in _sentencesByPrfix.items():
-    groups_by_sentence = defaultdict(list)
-    # print(sentences)
-    for sentence in _sentences:
-        _prefix, _pattern = sentence.split(" ", 1)
-        groups_by_sentence[_pattern].append(_prefix)
-
-    for _pattern, _prefixes in groups_by_sentence.items():
-        if len(_prefixes) >=1:
-            _changing_word = _pattern.split()
-            groups.append((_prefixes, _pattern, _changing_word))
+def group_sentences_by_values(sentences):
+    v = {}
+    for sentence in sentences:
+        if sentence["actioner"] in v:
+            v[sentence["actioner"]].append({'name' : sentence["name"],"action": sentence["action"], "timestamp": sentence["timestamp"]})
+        else:
+            v[sentence["actioner"]] = [{'name' : sentence["name"],"action": sentence["action"], "timestamp": sentence["timestamp"]}]
+    return v
 
 
-# Output the results to a file
-with open("output.txt", "w") as output_file:
-    ouptut = []
-    for group in groups:
-        prefixes, pattern, changing_word = group
-        for prefix in prefixes:
-            output_file.write(prefix + " " + str(pattern) + "\n")
-            ouptut.append(prefix)
-    output_file.write("The changing word was: " + ",".join(ouptut) + "\n")
+def group_sentences_by_action(sentences):
+    actions = {}
+    for sentence in sentences:
+        if sentence["action"] in actions:
+            actions[sentence["action"]].append({"name": sentence["name"], "timestamp": sentence["timestamp"]})
+        else:
+            actions[sentence["action"]] = [{"name": sentence["name"], "timestamp": sentence["timestamp"]}]
+    return actions
+
+
+sentences = parse_input_file("input.txt")
+name = group_sentences_by_name(sentences)
+actions = group_sentences_by_action(sentences)
+actioners  = group_sentences_by_values(sentences)
+
+with open("output.txt", "w") as f:
+    for sentence in sentences:
+        f.write(sentence["timestamp"] + " " + sentence["name"]  + " " + sentence["action"] + " " +sentence["actioner"]+ "\n")
+    if (len(name.keys())> 1):
+        f.write(f"The changing words was: {', '.join(sorted(name))}\n")
+    elif (len(actions.keys())>1):
+        f.write(f"The changing words was: {', '.join(sorted(actions))}\n")
+    elif (len(actioners.keys())>1):
+        f.write(f"The changing words was: {', '.join(sorted(actioners))}\n")
+        
